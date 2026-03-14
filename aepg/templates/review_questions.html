@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Review Extracted Questions</h2>
+    <p>PDF File: {{ pdf_filename }}</p>
+    
+    <form action="{{ url_for('save_reviewed_questions') }}" method="post">
+        {% for question in questions %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" name="selected_questions" value="{{ loop.index0 }}" id="q{{ loop.index }}">
+                    <label class="form-check-label" for="q{{ loop.index }}">
+                        <strong>Question {{ loop.index }}</strong>
+                    </label>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Question Text</label>
+                    <textarea class="form-control" name="question_text_{{ loop.index0 }}" rows="3">{{ question.text }}</textarea>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Question Type</label>
+                            <select class="form-control" name="question_type_{{ loop.index0 }}">
+                                <option value="mcq" {% if question.type == 'mcq' %}selected{% endif %}>MCQ</option>
+                                <option value="short" {% if question.type == 'short' %}selected{% endif %}>Short Answer</option>
+                                <option value="long" {% if question.type == 'long' %}selected{% endif %}>Long Answer</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Marks</label>
+                            <input type="number" class="form-control" name="marks_{{ loop.index0 }}" value="{{ question.marks|default(2) }}" min="1">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Difficulty</label>
+                            <select class="form-control" name="difficulty_{{ loop.index0 }}">
+                                <option value="Easy">Easy</option>
+                                <option value="Medium" selected>Medium</option>
+                                <option value="Hard">Hard</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="mb-3">
+                            <label class="form-label">Course Outcome</label>
+                            <input type="text" class="form-control" name="course_outcome_{{ loop.index0 }}" 
+                                   value="{{ question.course_outcome }}" readonly>
+                            <small class="form-text text-muted">Automatically assigned based on question content</small>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if question.type == 'mcq' %}
+                <div class="mcq-options">
+                    <div class="mb-2">
+                        <label class="form-label">Option A</label>
+                        <input type="text" class="form-control" name="option_a_{{ loop.index0 }}" value="{{ question.options.a if question.options }}"
+                               placeholder="Option A">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Option B</label>
+                        <input type="text" class="form-control" name="option_b_{{ loop.index0 }}" value="{{ question.options.b if question.options }}"
+                               placeholder="Option B">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Option C</label>
+                        <input type="text" class="form-control" name="option_c_{{ loop.index0 }}" value="{{ question.options.c if question.options }}"
+                               placeholder="Option C">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Option D</label>
+                        <input type="text" class="form-control" name="option_d_{{ loop.index0 }}" value="{{ question.options.d if question.options }}"
+                               placeholder="Option D">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label">Correct Option</label>
+                        <select class="form-control" name="correct_option_{{ loop.index0 }}">
+                            <option value="a" {% if question.correct_option == 'a' %}selected{% endif %}>A</option>
+                            <option value="b" {% if question.correct_option == 'b' %}selected{% endif %}>B</option>
+                            <option value="c" {% if question.correct_option == 'c' %}selected{% endif %}>C</option>
+                            <option value="d" {% if question.correct_option == 'd' %}selected{% endif %}>D</option>
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        <div class="text-center mb-5">
+            <button type="submit" class="btn btn-primary">Save Selected Questions</button>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Show/hide MCQ options based on question type selection
+    document.querySelectorAll('select[name^="question_type_"]').forEach(select => {
+        select.addEventListener('change', function() {
+            const questionDiv = this.closest('.card-body');
+            const mcqOptions = questionDiv.querySelector('.mcq-options');
+            if (mcqOptions) {
+                mcqOptions.style.display = this.value === 'mcq' ? 'block' : 'none';
+            }
+        });
+    });
+});
+</script>
+{% endblock %} 

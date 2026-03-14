@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Exam Paper</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .format-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .section-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .preview-section {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+        .format-help {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        #formatPreview {
+            font-family: 'Times New Roman', Times, serif;
+            white-space: pre-wrap;
+        }
+        .question-paper {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            font-family: 'Times New Roman', Times, serif;
+            line-height: 1.6;
+        }
+        .question-paper-header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+        }
+        .question-paper-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .question-paper-subtitle {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .question-paper-info {
+            margin-bottom: 20px;
+        }
+        .question-paper-instructions {
+            margin-bottom: 30px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+        }
+        .question-section {
+            margin-bottom: 30px;
+        }
+        .question-section-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 5px;
+        }
+        .question-item {
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+        .question-marks {
+            float: right;
+            font-weight: normal;
+            color: #666;
+        }
+        .question-options {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+        .answer-space {
+            margin-left: 20px;
+            margin-top: 10px;
+            border: 1px dashed #ccc;
+        }
+        @media print {
+            .question-paper {
+                padding: 0;
+            }
+            .no-print {
+                display: none;
+            }
+            .answer-space {
+                border: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Generate Exam</li>
+            </ol>
+        </nav>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Generate Exam Paper</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" id="examForm" enctype="multipart/form-data">
+                    <!-- Basic Information -->
+                    <div class="section-card">
+                        <h4>Basic Information</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="subject">Subject *</label>
+                                    <input type="text" class="form-control" id="subject" name="subject" required minlength="2">
+                                    <small class="text-muted">Required field</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="examTitle">Exam Title *</label>
+                                    <input type="text" class="form-control" id="examTitle" name="examTitle" required minlength="3">
+                                    <small class="text-muted">Required field</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="duration">Duration (minutes) *</label>
+                                    <input type="number" class="form-control" id="duration" name="duration" 
+                                           required min="30" max="360" value="180" 
+                                           oninput="validateNumericInput(this, 30, 360)">
+                                    <small class="text-muted">Enter duration between 30 and 360 minutes</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="totalMarks">Total Marks</label>
+                                    <input type="number" class="form-control" id="totalMarks" name="totalMarks" readonly>
+                                    <small class="text-muted">Calculated based on question distribution</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Exam Paper Format Upload -->
+                    <div class="section-card">
+                        <h4>Exam Paper Format</h4>
+                        <div class="form-group">
+                            <label for="formatFile">Upload Format Template (PDF or Image)</label>
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="formatFile" name="formatFile" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFormatFileUpload(this)">
+                                <label class="custom-file-label" for="formatFile">Choose file</label>
+                            </div>
+                            <small class="text-muted">Upload a sample exam paper format in PDF or image format (JPG, JPEG, PNG)</small>
+                        </div>
+                        
+                        <!-- Format Analysis Results -->
+                        <div id="formatAnalysisSection" class="mt-4" style="display: none;">
+                            <h5>Format Analysis</h5>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <h6>Structure</h6>
+                                            <ul class="list-unstyled">
+                                                <li><strong>Header:</strong> <span id="hasHeader">-</span></li>
+                                                <li><strong>Footer:</strong> <span id="hasFooter">-</span></li>
+                                                <li><strong>Total Marks:</strong> <span id="detectedTotalMarks">-</span></li>
+                                                <li><strong>Sections:</strong> <span id="sectionCount">-</span></li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h6>Content</h6>
+                                            <ul class="list-unstyled">
+                                                <li><strong>Subject:</strong> <span id="detectedSubject">-</span></li>
+                                                <li><strong>Duration:</strong> <span id="detectedDuration">-</span></li>
+                                                <li><strong>Instructions:</strong> <span id="hasInstructions">-</span></li>
+                                            </ul>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h6>Question Style</h6>
+                                            <ul class="list-unstyled">
+                                                <li><strong>Numbering:</strong> <span id="numberingStyle">-</span></li>
+                                                <li><strong>Marks Display:</strong> <span id="marksDisplay">-</span></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+
+                                    <!-- Section Details -->
+                                    <div id="sectionDetails" class="mt-3">
+                                        <h6>Section Details</h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Section</th>
+                                                        <th>Questions</th>
+                                                        <th>Marks/Question</th>
+                                                        <th>Total Marks</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="sectionTableBody">
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+
+                                    <!-- Apply Format Button -->
+                                    <div class="mt-3">
+                                        <button type="button" class="btn btn-primary" onclick="applyDetectedFormat()">
+                                            Apply This Format
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="formatPreviewContainer" class="mt-3" style="display: none;">
+                            <h5>Format Preview</h5>
+                            <div id="formatImagePreview" class="border rounded p-2" style="max-height: 300px; overflow-y: auto;">
+                                <img id="previewImage" src="" alt="Format Preview" style="max-width: 100%;">
+                                <embed id="previewPdf" src="" type="application/pdf" style="width: 100%; height: 300px; display: none;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Instructions -->
+                    <div class="format-section">
+                        <h4>Instructions</h4>
+                        <div class="form-group">
+                            <label for="instructions">Exam Instructions</label>
+                            <textarea class="form-control" id="instructions" name="instructions" rows="4"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Question Distribution -->
+                    <div class="format-section">
+                        <h4>Question Distribution *</h4>
+                        <div class="alert alert-info">
+                            <strong>Marks Distribution:</strong>
+                            <ul class="mb-0">
+                                <li>Multiple Choice Questions: 2 marks each</li>
+                                <li>Short Questions: 5 marks each</li>
+                                <li>Long Questions: 10 marks each</li>
+                            </ul>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="mcqCount">Multiple Choice Questions</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="mcqCount" name="mcqCount" 
+                                               min="0" max="50" value="0" 
+                                               oninput="validateNumericInput(this, 0, 50)"
+                                               onchange="validateAndUpdateMarks()">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">× 2 marks</span>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Enter between 0 and 50 questions</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="shortCount">Short Questions</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="shortCount" name="shortCount" 
+                                               min="0" max="20" value="0" 
+                                               oninput="validateNumericInput(this, 0, 20)"
+                                               onchange="validateAndUpdateMarks()">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">× 5 marks</span>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Enter between 0 and 20 questions</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="longCount">Long Questions</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="longCount" name="longCount" 
+                                               min="0" max="10" value="0" 
+                                               oninput="validateNumericInput(this, 0, 10)"
+                                               onchange="validateAndUpdateMarks()">
+                                        <div class="input-group-append">
+                                            <span class="input-group-text">× 10 marks</span>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Enter between 0 and 10 questions</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="alert alert-secondary mt-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>Total Questions:</strong> <span id="totalQuestions">0</span>
+                                </div>
+                                <div>
+                                    <strong>Total Marks:</strong> <span id="totalMarksDisplay">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview Section -->
+                    <div class="preview-section">
+                        <h4>Live Preview</h4>
+                        <div id="formatPreview" class="mt-3"></div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">Generate Exam Paper</button>
+                        <button type="button" class="btn btn-secondary" onclick="previewFormat()">Update Preview</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        function updateFileLabel(input) {
+            const label = input.nextElementSibling;
+            const fileName = input.files[0]?.name || 'Choose file';
+            label.textContent = fileName;
+
+            // Show preview
+            const previewContainer = document.getElementById('formatPreviewContainer');
+            const previewImage = document.getElementById('previewImage');
+            const previewPdf = document.getElementById('previewPdf');
+
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                previewContainer.style.display = 'block';
+
+                if (file.type === 'application/pdf') {
+                    previewPdf.style.display = 'block';
+                    previewImage.style.display = 'none';
+                    previewPdf.src = URL.createObjectURL(file);
+                } else {
+                    previewPdf.style.display = 'none';
+                    previewImage.style.display = 'block';
+                    previewImage.src = URL.createObjectURL(file);
+                }
+            } else {
+                previewContainer.style.display = 'none';
+            }
+        }
+
+        async function handleFormatFileUpload(input) {
+            // Update file label
+            updateFileLabel(input);
+
+            if (input.files && input.files[0]) {
+                const formData = new FormData();
+                formData.append('formatFile', input.files[0]);
+
+                try {
+                    // Show loading state
+                    document.getElementById('formatAnalysisSection').innerHTML = '<div class="alert alert-info">Analyzing exam format...</div>';
+
+                    const response = await fetch('/analyze_format', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const result = await response.json();
+            
+                    if (result.success) {
+                        displayFormatAnalysis(result.analysis);
+                        // If there are warnings, display them
+                        if (result.analysis.warnings) {
+                            displayWarning(result.analysis.warnings);
+                        }
+                    } else {
+                        displayError('Error analyzing format: ' + result.error);
+                    }
+                } catch (err) {
+                    displayError('Error uploading file: ' + err.message);
+                }
+            }
+        }
+
+        function validateNumericInput(input, min, max) {
+            // Remove any non-numeric characters
+            input.value = input.value.replace(/[^0-9]/g, '');
+            
+            // Convert to number and validate range
+            let value = parseInt(input.value) || 0;
+            
+            // Ensure value is within bounds
+            if (value < min) {
+                value = min;
+                input.setCustomValidity(`Value must be at least ${min}`);
+            } else if (value > max) {
+                value = max;
+                input.setCustomValidity(`Value must not exceed ${max}`);
+            } else {
+                input.setCustomValidity('');
+            }
+            
+            // Update input value
+            input.value = value;
+            
+            // Show validation message
+            input.reportValidity();
+            
+            return value;
+        }
+
+        function validateAndUpdateMarks() {
+            // Get and validate all numeric inputs
+            const mcqCount = validateNumericInput(document.getElementById('mcqCount'), 0, 50);
+            const shortCount = validateNumericInput(document.getElementById('shortCount'), 0, 20);
+            const longCount = validateNumericInput(document.getElementById('longCount'), 0, 10);
+            const duration = validateNumericInput(document.getElementById('duration'), 30, 360);
+
+            // Calculate totals for each section
+            const mcqTotal = mcqCount * 2;
+            const shortTotal = shortCount * 5;
+            const longTotal = longCount * 10;
+
+            // Update overall totals
+            const totalMarks = mcqTotal + shortTotal + longTotal;
+            const totalQuestions = mcqCount + shortCount + longCount;
+
+            document.getElementById('totalMarks').value = totalMarks;
+            document.getElementById('totalMarksDisplay').textContent = totalMarks;
+            document.getElementById('totalQuestions').textContent = totalQuestions;
+
+            // Validate total questions and update submit button
+            const submitButton = document.querySelector('button[type="submit"]');
+            if (totalQuestions === 0) {
+                submitButton.disabled = true;
+                submitButton.title = 'Please add at least one question';
+                document.getElementById('totalMarks').setCustomValidity('At least one question is required');
+            } else {
+                submitButton.disabled = false;
+                submitButton.title = '';
+                document.getElementById('totalMarks').setCustomValidity('');
+            }
+
+            // Update preview
+            previewFormat();
+        }
+
+        function generateQuestionPaper() {
+            const title = document.getElementById('examTitle').value;
+            const subject = document.getElementById('subject').value;
+            const duration = document.getElementById('duration').value;
+            const totalMarks = document.getElementById('totalMarks').value;
+            const instructions = document.getElementById('instructions').value;
+            const mcqCount = parseInt(document.getElementById('mcqCount').value) || 0;
+            const shortCount = parseInt(document.getElementById('shortCount').value) || 0;
+            const longCount = parseInt(document.getElementById('longCount').value) || 0;
+
+            // Create the question paper container
+            const paperContainer = document.createElement('div');
+            paperContainer.className = 'question-paper';
+
+            // Add header based on format analysis or default
+            const header = document.createElement('div');
+            header.className = 'question-paper-header';
+            
+            // Default header format
+            header.innerHTML = `
+                <div class="question-paper-title">${title}</div>
+                <div class="question-paper-subtitle">${subject}</div>
+                <div class="question-paper-info">
+                    <div>Duration: ${duration} minutes</div>
+                    <div>Total Marks: ${totalMarks}</div>
+                </div>
+            `;
+            paperContainer.appendChild(header);
+
+            // Add instructions if present
+            if (instructions) {
+                const instructionsSection = document.createElement('div');
+                instructionsSection.className = 'question-paper-instructions';
+                instructionsSection.innerHTML = `
+                    <strong>Instructions:</strong><br>
+                    ${instructions.replace(/\n/g, '<br>')}
+                `;
+                paperContainer.appendChild(instructionsSection);
+            }
+
+            // Add sections
+            let sectionIndex = 0;
+
+            // MCQ Section
+            if (mcqCount > 0) {
+                const mcqSection = document.createElement('div');
+                mcqSection.className = 'question-section';
+                
+                const sectionTitle = document.createElement('div');
+                sectionTitle.className = 'question-section-title';
+                sectionTitle.innerHTML = `Section ${String.fromCharCode(65 + sectionIndex)}: Multiple Choice Questions (${mcqCount} × 2 = ${mcqCount * 2} marks)`;
+                mcqSection.appendChild(sectionTitle);
+
+                for (let i = 0; i < mcqCount; i++) {
+                    const question = document.createElement('div');
+                    question.className = 'question-item';
+                    question.innerHTML = `
+                        <div>Q${i + 1} <span class="question-marks">[2 marks]</span><br>
+                        Sample multiple choice question ${i + 1}
+                        <div class="question-options">
+                            a) Option A<br>
+                            b) Option B<br>
+                            c) Option C<br>
+                            d) Option D
+                        </div>
+                        </div>
+                    `;
+                    mcqSection.appendChild(question);
+                }
+                paperContainer.appendChild(mcqSection);
+                sectionIndex++;
+            }
+
+            // Short Questions Section
+            if (shortCount > 0) {
+                const shortSection = document.createElement('div');
+                shortSection.className = 'question-section';
+                
+                const sectionTitle = document.createElement('div');
+                sectionTitle.className = 'question-section-title';
+                sectionTitle.innerHTML = `Section ${String.fromCharCode(65 + sectionIndex)}: Short Answer Questions (${shortCount} × 5 = ${shortCount * 5} marks)`;
+                shortSection.appendChild(sectionTitle);
+
+                for (let i = 0; i < shortCount; i++) {
+                    const question = document.createElement('div');
+                    question.className = 'question-item';
+                    question.innerHTML = `
+                        <div>Q${sectionIndex + i + 1} <span class="question-marks">[5 marks]</span><br>
+                        Sample short answer question ${i + 1}</div>
+                        <div class="answer-space" style="min-height: 100px;"></div>
+                    `;
+                    shortSection.appendChild(question);
+                }
+                paperContainer.appendChild(shortSection);
+                sectionIndex++;
+            }
+
+            // Long Questions Section
+            if (longCount > 0) {
+                const longSection = document.createElement('div');
+                longSection.className = 'question-section';
+                
+                const sectionTitle = document.createElement('div');
+                sectionTitle.className = 'question-section-title';
+                sectionTitle.innerHTML = `Section ${String.fromCharCode(65 + sectionIndex)}: Long Answer Questions (${longCount} × 10 = ${longCount * 10} marks)`;
+                longSection.appendChild(sectionTitle);
+
+                for (let i = 0; i < longCount; i++) {
+                    const question = document.createElement('div');
+                    question.className = 'question-item';
+                    question.innerHTML = `
+                        <div>Q${sectionIndex + i + 1} <span class="question-marks">[10 marks]</span><br>
+                        Sample long answer question ${i + 1}</div>
+                        <div class="answer-space" style="min-height: 200px;"></div>
+                    `;
+                    longSection.appendChild(question);
+                }
+                paperContainer.appendChild(longSection);
+            }
+
+            // Add print button
+            const printButton = document.createElement('button');
+            printButton.className = 'btn btn-primary no-print mt-3';
+            printButton.innerHTML = 'Print Question Paper';
+            printButton.onclick = () => window.print();
+            paperContainer.appendChild(printButton);
+
+            // Replace the preview content
+            const previewContainer = document.getElementById('formatPreview');
+            previewContainer.innerHTML = '';
+            previewContainer.appendChild(paperContainer);
+
+            // Add custom styles for question paper
+            const customStyles = document.createElement('style');
+            customStyles.textContent = `
+                .question-paper {
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 40px;
+                    font-family: 'Times New Roman', Times, serif;
+                    line-height: 1.6;
+                }
+                .question-paper-header {
+                    text-align: center;
+                    margin-bottom: 30px;
+                    border-bottom: 2px solid #000;
+                    padding-bottom: 20px;
+                }
+                .question-paper-title {
+                    font-size: 24px;
+                    font-weight: bold;
+                    margin-bottom: 10px;
+                }
+                .question-paper-subtitle {
+                    font-size: 20px;
+                    margin-bottom: 10px;
+                }
+                .question-paper-info {
+                    margin-bottom: 20px;
+                }
+                .question-paper-instructions {
+                    margin-bottom: 30px;
+                    padding: 15px;
+                    background-color: #f8f9fa;
+                    border: 1px solid #dee2e6;
+                }
+                .question-section {
+                    margin-bottom: 30px;
+                }
+                .question-section-title {
+                    font-weight: bold;
+                    margin-bottom: 15px;
+                    border-bottom: 1px solid #dee2e6;
+                    padding-bottom: 5px;
+                }
+                .question-item {
+                    margin-bottom: 20px;
+                    page-break-inside: avoid;
+                }
+                .question-marks {
+                    float: right;
+                    font-weight: normal;
+                    color: #666;
+                }
+                .question-options {
+                    margin-left: 20px;
+                    margin-top: 10px;
+                }
+                .answer-space {
+                    margin-left: 20px;
+                    margin-top: 10px;
+                    border: 1px dashed #ccc;
+                }
+                @media print {
+                    .question-paper {
+                        padding: 0;
+                    }
+                    .no-print {
+                        display: none;
+                    }
+                    .answer-space {
+                        border: none;
+                    }
+                }
+            `;
+            document.head.appendChild(customStyles);
+        }
+
+        function previewFormat() {
+            generateQuestionPaper();
+        }
+
+        function displayFormatAnalysis(analysis) {
+            const formatSection = document.getElementById('formatAnalysisSection');
+            let html = '<div class="format-section">';
+            
+            // Display exam title and basic info
+            html += '<h4>Exam Format Analysis</h4>';
+            if (analysis.content.exam_title) {
+                html += `<p><strong>Title:</strong> ${analysis.content.exam_title}</p>`;
+            }
+            if (analysis.content.subject) {
+                html += `<p><strong>Subject:</strong> ${analysis.content.subject}</p>`;
+                // Auto-fill subject field
+                document.getElementById('subject').value = analysis.content.subject;
+            }
+            if (analysis.content.time_duration) {
+                html += `<p><strong>Duration:</strong> ${analysis.content.time_duration}</p>`;
+                // Auto-fill duration if available in minutes
+                if (analysis.content.duration_minutes) {
+                    document.getElementById('duration').value = analysis.content.duration_minutes;
+                }
+            }
+            if (analysis.structure.total_marks) {
+                html += `<p><strong>Total Marks:</strong> ${analysis.structure.total_marks}</p>`;
+                document.getElementById('totalMarks').value = analysis.structure.total_marks;
+            }
+
+            // Display instructions if present
+            if (analysis.content.instructions) {
+                html += '<div class="section-card">';
+                html += '<h5>Instructions</h5>';
+                html += `<p>${analysis.content.instructions}</p>`;
+                html += '</div>';
+                // Auto-fill instructions
+                document.getElementById('instructions').value = analysis.content.instructions;
+            }
+
+            // Display sections
+            if (analysis.structure.sections && analysis.structure.sections.length > 0) {
+                html += '<div class="section-card">';
+                html += '<h5>Sections</h5>';
+                
+                let mcqCount = 0;
+                let shortCount = 0;
+                let longCount = 0;
+                
+                analysis.structure.sections.forEach(section => {
+                    html += `<div class="mb-3">`;
+                    html += `<strong>${section.title}</strong><br>`;
+                    html += `Questions: ${section.question_count}, `;
+                    html += `Marks per Question: ${section.marks_per_question}, `;
+                    html += `Total Marks: ${section.total_marks}<br>`;
+                    html += `Type: ${section.question_type || 'Not specified'}`;
+                    html += `</div>`;
+                    
+                    // Count questions by type
+                    if (section.question_type === 'mcq') {
+                        mcqCount += section.question_count;
+                    } else if (section.question_type === 'short') {
+                        shortCount += section.question_count;
+                    } else if (section.question_type === 'long') {
+                        longCount += section.question_count;
+                    }
+                });
+                
+                html += '</div>';
+                
+                // Auto-fill question counts
+                document.getElementById('mcqCount').value = mcqCount;
+                document.getElementById('shortCount').value = shortCount;
+                document.getElementById('longCount').value = longCount;
+            }
+
+            // Display styling information
+            if (analysis.styling.numbering_style) {
+                html += '<div class="section-card">';
+                html += '<h5>Question Numbering Style</h5>';
+                html += `<p>Type: ${analysis.styling.numbering_style.type}<br>`;
+                html += `Prefix: ${analysis.styling.numbering_style.prefix}</p>`;
+                if (analysis.styling.numbering_style.examples) {
+                    html += `<p>Examples: ${analysis.styling.numbering_style.examples.join(', ')}</p>`;
+                }
+                html += '</div>';
+            }
+
+            html += '</div>';
+            formatSection.innerHTML = html;
+            formatSection.style.display = 'block';
+        }
+
+        function displayWarning(message) {
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'alert alert-warning';
+            warningDiv.innerHTML = `<strong>Warning:</strong> ${message}`;
+            document.getElementById('formatAnalysisSection').appendChild(warningDiv);
+        }
+
+        function displayError(message) {
+            const formatSection = document.getElementById('formatAnalysisSection');
+            formatSection.innerHTML = `<div class="alert alert-danger">${message}</div>`;
+        }
+
+        function applyDetectedFormat() {
+            // Get the analysis data from the displayed elements
+            const totalMarks = parseInt(document.getElementById('detectedTotalMarks').textContent) || 0;
+            
+            // Get all sections from the table
+            const sections = Array.from(document.getElementById('sectionTableBody').getElementsByTagName('tr')).map(row => ({
+                questionCount: parseInt(row.cells[1].textContent) || 0,
+                marksPerQuestion: parseInt(row.cells[2].textContent) || 0
+            }));
+
+            // Update the form fields based on marks per question
+            let mcqCount = 0, shortCount = 0, longCount = 0;
+            sections.forEach(section => {
+                if (section.marksPerQuestion === 2) {
+                    mcqCount += section.questionCount;
+                } else if (section.marksPerQuestion === 5) {
+                    shortCount += section.questionCount;
+                } else if (section.marksPerQuestion === 10) {
+                    longCount += section.questionCount;
+                }
+            });
+
+            // Update the form
+            document.getElementById('mcqCount').value = mcqCount;
+            document.getElementById('shortCount').value = shortCount;
+            document.getElementById('longCount').value = longCount;
+
+            // Update the distribution
+            validateAndUpdateMarks();
+        }
+
+        // Form validation before submission
+        document.getElementById('examForm').addEventListener('submit', function(e) {
+            const subject = document.getElementById('subject').value.trim();
+            const examTitle = document.getElementById('examTitle').value.trim();
+            const duration = validateNumericInput(document.getElementById('duration'), 30, 360);
+            const totalMarks = parseInt(document.getElementById('totalMarks').value) || 0;
+
+            let isValid = true;
+            let errorMessage = [];
+
+            if (!subject || !examTitle) {
+                errorMessage.push('Please fill in all required fields (Subject and Exam Title)');
+                isValid = false;
+            }
+
+            if (duration < 30 || duration > 360) {
+                errorMessage.push('Duration must be between 30 and 360 minutes');
+                isValid = false;
+            }
+
+            if (totalMarks <= 0) {
+                errorMessage.push('Please add at least one question');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                alert(errorMessage.join('\n'));
+            }
+        });
+
+        // Initialize form validation on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            validateAndUpdateMarks();
+        });
+    </script>
+</body>
+</html> 

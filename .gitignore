@@ -1,0 +1,8 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+uploads/
+instance/
+.env
+nltk_data/

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Templates</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .template-card {
+            margin-bottom: 20px;
+            transition: transform 0.2s;
+        }
+        .template-card:hover {
+            transform: translateY(-5px);
+        }
+        .section-preview {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+        .stats-badge {
+            margin-right: 10px;
+            background: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active">Templates</li>
+            </ol>
+        </nav>
+
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Exam Templates</h2>
+            <a href="{{ url_for('upload_template') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Upload New Template
+            </a>
+        </div>
+
+        {% if templates %}
+            <div class="row">
+                {% for template in templates %}
+                    <div class="col-md-6">
+                        <div class="card template-card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">{{ template.title }}</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="template-info mb-3">
+                                    <span class="stats-badge">
+                                        <i class="fas fa-book"></i> {{ template.subject }}
+                                    </span>
+                                    <span class="stats-badge">
+                                        <i class="fas fa-clock"></i> {{ template.time_duration }} mins
+                                    </span>
+                                    <span class="stats-badge">
+                                        <i class="fas fa-star"></i> {{ template.total_marks }} marks
+                                    </span>
+                                </div>
+
+                                <h6>Sections:</h6>
+                                {% for section in template.sections %}
+                                    <div class="section-preview">
+                                        <strong>{{ section.title }}</strong><br>
+                                        <small>
+                                            Questions: {{ section.question_types|length }} |
+                                            Marks: {{ section.marks_distribution|sum }}
+                                        </small>
+                                    </div>
+                                {% endfor %}
+
+                                <div class="mt-3">
+                                    <a href="{{ url_for('generate_exam_from_template', template_id=template.id) }}" 
+                                       class="btn btn-success btn-sm">
+                                        Generate Exam
+                                    </a>
+                                    <button class="btn btn-danger btn-sm float-right" 
+                                            onclick="deleteTemplate({{ template.id }})">
+                                        Delete
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-footer text-muted">
+                                Created: {{ template.created_at.strftime('%B %d, %Y') }}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                <h4 class="alert-heading">No Templates Yet!</h4>
+                <p>Upload your first exam template to get started. Templates help you maintain consistency in your exam papers.</p>
+                <hr>
+                <p class="mb-0">
+                    <a href="{{ url_for('upload_template') }}" class="btn btn-info">
+                        Upload Your First Template
+                    </a>
+                </p>
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://kit.fontawesome.com/your-font-awesome-kit.js"></script>
+    <script>
+        function deleteTemplate(templateId) {
+            if (confirm('Are you sure you want to delete this template?')) {
+                fetch(`/delete_template/${templateId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html> 

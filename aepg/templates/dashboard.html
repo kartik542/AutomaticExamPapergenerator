@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container my-5">
+
+    <!-- Welcome Message -->
+    <div class="alert alert-success text-center">
+        👋 Welcome, {{ user.full_name }}!
+    </div>
+
+    <!-- Dashboard Overview -->
+    <h3 class="section-title">📊 Dashboard Overview</h3>
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card p-4 text-center bg-white">
+                <h6 class="text-muted">Total Questions</h6>
+                <h2 class="text-primary fw-bold">{{ total_questions }}</h2>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card p-4 text-center bg-white">
+                <h6 class="text-muted">Total Marks</h6>
+                <h2 class="text-success fw-bold">{{ total_marks }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <h3 class="section-title">⚙️ Quick Actions</h3>
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-4">
+            <a href="{{ url_for('add_question') }}" class="btn btn-main w-100">➕ Add Manual Question</a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a href="{{ url_for('upload_pdf_form') }}" class="btn btn-main w-100">📄 Upload PDF for Questions</a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a href="{{ url_for('generate_exam') }}" class="btn btn-main w-100">📝 Generate Exam Paper</a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a href="{{ url_for('question_bank') }}" class="btn btn-main w-100">📚 View Question Bank</a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a href="{{ url_for('view_exam_papers') }}" class="btn btn-main w-100">📑 View Exam Papers</a>
+        </div>
+    </div>
+
+    <!-- HOD Logs -->
+    {% if is_hod %}
+    <h3 class="section-title mt-5">🧾 Teacher Activity Logs</h3>
+
+    <!-- Filter Form -->
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-5">
+            <input type="text" name="teacher_name" class="form-control" placeholder="Search by teacher name" value="{{ filter_name }}">
+        </div>
+        <div class="col-md-4">
+            <input type="date" name="date" class="form-control" value="{{ filter_date }}">
+        </div>
+        <div class="col-md-3 d-grid">
+            <button class="btn btn-primary" type="submit">🔍 Filter</button>
+        </div>
+    </form>
+
+    <!-- Logs -->
+    <div class="card p-3">
+        {% if logs %}
+            {% for log in logs %}
+                <p>
+                    <strong>{{ log.teacher.full_name }} (ID {{ log.teacher_id }})</strong><br>
+                    <small class="text-muted">
+                        Session: {{ log.timestamp.strftime('%d %B %Y, %I:%M %p') }} to {{ log.logout_time.strftime('%I:%M %p') }} (IST)<br>
+                        Duration: {{ ((log.logout_time - log.timestamp).total_seconds() // 60)|int }} minutes
+                    </small>
+                </p>
+                {% if not loop.last %}<hr>{% endif %}
+            {% endfor %}
+        {% else %}
+            <p>No logs found for the selected filter.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

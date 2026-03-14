@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Exam Template</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .upload-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .instructions {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('view_templates') }}">Templates</a></li>
+                <li class="breadcrumb-item active">Upload Template</li>
+            </ol>
+        </nav>
+
+        <div class="card">
+            <div class="card-header">
+                <h2>Upload Exam Template</h2>
+            </div>
+            <div class="card-body">
+                <div class="instructions">
+                    <h4>Instructions</h4>
+                    <p>Upload an existing exam paper PDF to create a template. The system will analyze:</p>
+                    <ul>
+                        <li>Overall exam structure</li>
+                        <li>Section distribution</li>
+                        <li>Question types and marks distribution</li>
+                        <li>Time duration and total marks</li>
+                        <li>Instructions and formatting</li>
+                    </ul>
+                </div>
+
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="title">Template Title</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="subject">Subject</label>
+                        <input type="text" class="form-control" id="subject" name="subject" required>
+                    </div>
+
+                    <div class="upload-section">
+                        <div class="form-group">
+                            <label for="template_file">Upload Template PDF</label>
+                            <input type="file" class="form-control-file" id="template_file" name="template_file" accept=".pdf" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Create Template</button>
+                    <a href="{{ url_for('view_templates') }}" class="btn btn-secondary">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html> 

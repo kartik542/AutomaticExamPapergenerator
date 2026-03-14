@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Question Bank</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f0f2f5;
+        }
+        .navbar {
+            background-color: #4a69bd;
+        }
+        .navbar-brand {
+            color: white !important;
+            font-weight: bold;
+        }
+        .container {
+            max-width: 900px;
+        }
+        .card {
+            border-radius: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+        }
+        .question-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .question-meta {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .option {
+            margin-left: 15px;
+        }
+        .correct {
+            font-weight: bold;
+            color: green;
+        }
+        .img-thumbnail {
+            max-width: 120px;
+            max-height: 120px;
+            border-radius: 10px;
+        }
+        .btn-sm {
+            padding: 6px 14px;
+        }
+        .btn-outline-primary:hover {
+            background-color: #4a69bd;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="{{ url_for('dashboard') }}">← Dashboard</a>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h2 class="fw-bold text-dark mb-0">📚 Question Bank</h2>
+    {% if questions %}
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('generate_exam') }}" class="btn btn-primary btn-sm shadow">📝 Generate Exam Paper</a>
+        <a href="{{ url_for('download_question_bank') }}" class="btn btn-success btn-sm shadow">⬇️ Download PDF</a>
+        <form method="POST" action="{{ url_for('delete_all_questions') }}" onsubmit="return confirm('Are you sure you want to delete all questions?');">
+            <button type="submit" class="btn btn-danger btn-sm shadow">🗑️ Delete All</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+    {% if questions %}
+        {% for question in questions %}
+            <div class="card p-4 mb-4">
+                <div class="question-title mb-2">{{ loop.index }}. {{ question.question_text }}</div>
+                <div class="question-meta mb-2">
+                    Subject: <strong>{{ question.subject }}</strong> |
+                    Marks: <strong>{{ question.marks }}</strong> |
+                    Difficulty: <strong>{{ question.difficulty }}</strong> |
+                    Type: <strong class="text-capitalize">{{ question.question_type }}</strong>
+                </div>
+
+                {% if question.question_type == 'mcq' %}
+                    <div class="ms-2">A. {{ question.option_a }}</div>
+                    <div class="ms-2">B. {{ question.option_b }}</div>
+                    <div class="ms-2">C. {{ question.option_c }}</div>
+                    <div class="ms-2">D. {{ question.option_d }}</div>
+                    <div class="correct mt-2 ms-2">✅ Correct: {{ question.correct_option }}</div>
+                {% endif %}
+
+                {% if question.image %}
+                    <div class="mt-3">
+                        <img src="{{ url_for('static', filename='uploads/' + question.image) }}" class="img-thumbnail" alt="Question Image">
+                    </div>
+                {% endif %}
+
+                <div class="mt-4 d-flex gap-2">
+                    <a href="{{ url_for('edit_question', question_id=question.id) }}" class="btn btn-outline-primary btn-sm">✏️ Edit</a>
+                    <form method="POST" action="{{ url_for('delete_question', question_id=question.id) }}" onsubmit="return confirm('Delete this question?');">
+                        <button type="submit" class="btn btn-outline-danger btn-sm">🗑️ Delete</button>
+                    </form>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info shadow-sm">No questions available in the bank yet. Start adding some!</div>
+    {% endif %}
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

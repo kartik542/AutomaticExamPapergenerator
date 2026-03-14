@@ -1,0 +1,97 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="container mt-5">
+    <div class="card shadow-lg">
+        <div class="card-body p-4">
+            <h2 class="text-center mb-4 text-primary">Add New Question</h2>
+            <form method="POST" enctype="multipart/form-data">
+                <div class="mb-3">
+                    <label class="form-label">Question Text</label>
+                    <textarea name="question_text" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Subject</label>
+                        <input type="text" name="subject" class="form-control" required>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Difficulty</label>
+                        <select name="difficulty" class="form-select">
+                            <option>Easy</option>
+                            <option selected>Medium</option>
+                            <option>Hard</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">Marks</label>
+                        <input type="number" name="marks" class="form-control" value="1" min="1">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Question Type</label>
+                    <select name="question_type" class="form-select" id="questionType">
+                        <option value="mcq" selected>MCQ</option>
+                        <option value="short">Short Answer</option>
+                    </select>
+                </div>
+                <div class="options-block">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <input type="text" name="option_a" class="form-control" placeholder="Option A">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="option_b" class="form-control" placeholder="Option B">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <input type="text" name="option_c" class="form-control" placeholder="Option C">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" name="option_d" class="form-control" placeholder="Option D">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Correct Option (A/B/C/D)</label>
+                        <input type="text" name="correct_option" class="form-control">
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Chapter</label>
+                        <input type="text" name="chapter" class="form-control">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Topic</label>
+                        <input type="text" name="topic" class="form-control">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Upload Image (optional)</label>
+                    <input type="file" name="image" class="form-control">
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary px-4">Add Question</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const qType = document.getElementById('questionType');
+    const optionsBlocks = document.querySelectorAll('.options-block');
+
+    function toggleOptions() {
+        const isMCQ = qType.value === 'mcq';
+        optionsBlocks.forEach(block => {
+            block.style.display = isMCQ ? 'block' : 'none';
+        });
+    }
+
+    qType.addEventListener('change', toggleOptions);
+    toggleOptions();
+});
+</script>
+{% endblock %}
